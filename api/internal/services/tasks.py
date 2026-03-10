@@ -5,7 +5,13 @@ import uuid
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..orm_models.dao import VALID_TRANSITIONS, Task, TaskPriority, TaskStatus, TaskStatusHistory
+from ..orm_models.dao import (
+    VALID_TRANSITIONS,
+    Task,
+    TaskPriority,
+    TaskStatus,
+    TaskStatusHistory,
+)
 from ..repository.tasks import TaskRepository
 
 
@@ -86,7 +92,8 @@ class TaskService:
             raise HTTPException(status_code=400, detail=detail)
 
         return await self._repo.update_status(
-            session, task,
+            session,
+            task,
             new_status=new_status,
             changed_by=changed_by,
             comment=comment,

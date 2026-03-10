@@ -34,39 +34,60 @@ async def seed(db_session: AsyncSession):
     await db_session.flush()
 
     task_created = Task(
-        project_id=project.id, title="Task Alpha",
-        priority=TaskPriority.high, status=TaskStatus.created,
-        author_id=alice.id, assignee_id=bob.id,
+        project_id=project.id,
+        title="Task Alpha",
+        priority=TaskPriority.high,
+        status=TaskStatus.created,
+        author_id=alice.id,
+        assignee_id=bob.id,
     )
     task_in_progress = Task(
-        project_id=project.id, title="Task Beta",
-        priority=TaskPriority.low, status=TaskStatus.in_progress,
+        project_id=project.id,
+        title="Task Beta",
+        priority=TaskPriority.low,
+        status=TaskStatus.in_progress,
         author_id=alice.id,
     )
     task_done = Task(
-        project_id=project.id, title="Task Gamma",
-        priority=TaskPriority.medium, status=TaskStatus.done,
-        author_id=alice.id, assignee_id=bob.id,
+        project_id=project.id,
+        title="Task Gamma",
+        priority=TaskPriority.medium,
+        status=TaskStatus.done,
+        author_id=alice.id,
+        assignee_id=bob.id,
     )
     db_session.add_all([task_created, task_in_progress, task_done])
     await db_session.flush()
 
-    db_session.add(TaskStatusHistory(
-        task_id=task_done.id, changed_by=alice.id,
-        from_status=TaskStatus.created, to_status=TaskStatus.in_progress,
-    ))
-    db_session.add(TaskStatusHistory(
-        task_id=task_done.id, changed_by=alice.id,
-        from_status=TaskStatus.in_progress, to_status=TaskStatus.review,
-    ))
-    db_session.add(TaskStatusHistory(
-        task_id=task_done.id, changed_by=alice.id,
-        from_status=TaskStatus.review, to_status=TaskStatus.done,
-    ))
+    db_session.add(
+        TaskStatusHistory(
+            task_id=task_done.id,
+            changed_by=alice.id,
+            from_status=TaskStatus.created,
+            to_status=TaskStatus.in_progress,
+        )
+    )
+    db_session.add(
+        TaskStatusHistory(
+            task_id=task_done.id,
+            changed_by=alice.id,
+            from_status=TaskStatus.in_progress,
+            to_status=TaskStatus.review,
+        )
+    )
+    db_session.add(
+        TaskStatusHistory(
+            task_id=task_done.id,
+            changed_by=alice.id,
+            from_status=TaskStatus.review,
+            to_status=TaskStatus.done,
+        )
+    )
 
     await db_session.commit()
     return {
-        "alice": alice, "bob": bob,
+        "alice": alice,
+        "bob": bob,
         "project": project,
         "task_created": task_created,
         "task_in_progress": task_in_progress,
@@ -76,13 +97,16 @@ async def seed(db_session: AsyncSession):
 
 class TestCreateTask:
     async def test_creates_task_and_returns_201(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "title": "New Task",
-            "priority": "high",
-            "author_id": str(seed["alice"].id),
-            "assignee_id": str(seed["bob"].id),
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "title": "New Task",
+                "priority": "high",
+                "author_id": str(seed["alice"].id),
+                "assignee_id": str(seed["bob"].id),
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert data["title"] == "New Task"
@@ -92,44 +116,59 @@ class TestCreateTask:
         assert data["assignee_id"] == str(seed["bob"].id)
 
     async def test_creates_task_without_assignee(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "title": "Unassigned Task",
-            "author_id": str(seed["alice"].id),
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "title": "Unassigned Task",
+                "author_id": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 201
         assert resp.json()["assignee_id"] is None
 
     async def test_default_priority_is_medium(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "title": "Default Priority Task",
-            "author_id": str(seed["alice"].id),
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "title": "Default Priority Task",
+                "author_id": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 201
         assert resp.json()["priority"] == "medium"
 
     async def test_missing_title_returns_422(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "author_id": str(seed["alice"].id),
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "author_id": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 422
 
     async def test_missing_author_returns_422(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "title": "No Author",
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "title": "No Author",
+            },
+        )
         assert resp.status_code == 422
 
     async def test_invalid_priority_returns_422(self, client: AsyncClient, seed):
-        resp = await client.post("/tasks/", json={
-            "project_id": str(seed["project"].id),
-            "title": "Bad Priority",
-            "author_id": str(seed["alice"].id),
-            "priority": "urgent",
-        })
+        resp = await client.post(
+            "/tasks/",
+            json={
+                "project_id": str(seed["project"].id),
+                "title": "Bad Priority",
+                "author_id": str(seed["alice"].id),
+                "priority": "urgent",
+            },
+        )
         assert resp.status_code == 422
 
 
@@ -217,53 +256,71 @@ class TestGetTask:
 class TestChangeTaskStatus:
     async def test_valid_transition_returns_200_and_new_status(self, client: AsyncClient, seed):
         task_id = str(seed["task_created"].id)
-        resp = await client.patch(f"/tasks/{task_id}/status", json={
-            "new_status": "in_progress",
-            "changed_by": str(seed["alice"].id),
-        })
+        resp = await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "new_status": "in_progress",
+                "changed_by": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["status"] == "in_progress"
 
     async def test_valid_transition_with_comment(self, client: AsyncClient, seed):
         task_id = str(seed["task_in_progress"].id)
-        resp = await client.patch(f"/tasks/{task_id}/status", json={
-            "new_status": "review",
-            "changed_by": str(seed["alice"].id),
-            "comment": "Готово к ревью",
-        })
+        resp = await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "new_status": "review",
+                "changed_by": str(seed["alice"].id),
+                "comment": "Готово к ревью",
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["status"] == "review"
 
     async def test_invalid_transition_returns_400(self, client: AsyncClient, seed):
         task_id = str(seed["task_created"].id)
-        resp = await client.patch(f"/tasks/{task_id}/status", json={
-            "new_status": "done",
-            "changed_by": str(seed["alice"].id),
-        })
+        resp = await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "new_status": "done",
+                "changed_by": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 400
         assert "Недопустимый переход" in resp.json()["detail"]
 
     async def test_terminal_status_returns_400_with_message(self, client: AsyncClient, seed):
         task_id = str(seed["task_done"].id)
-        resp = await client.patch(f"/tasks/{task_id}/status", json={
-            "new_status": "in_progress",
-            "changed_by": str(seed["alice"].id),
-        })
+        resp = await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "new_status": "in_progress",
+                "changed_by": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 400
         assert "терминальным" in resp.json()["detail"].lower()
 
     async def test_nonexistent_task_returns_404(self, client: AsyncClient, seed):
-        resp = await client.patch(f"/tasks/{uuid.uuid4()}/status", json={
-            "new_status": "in_progress",
-            "changed_by": str(seed["alice"].id),
-        })
+        resp = await client.patch(
+            f"/tasks/{uuid.uuid4()}/status",
+            json={
+                "new_status": "in_progress",
+                "changed_by": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 404
 
     async def test_missing_new_status_returns_422(self, client: AsyncClient, seed):
         task_id = str(seed["task_created"].id)
-        resp = await client.patch(f"/tasks/{task_id}/status", json={
-            "changed_by": str(seed["alice"].id),
-        })
+        resp = await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "changed_by": str(seed["alice"].id),
+            },
+        )
         assert resp.status_code == 422
 
 
@@ -281,11 +338,14 @@ class TestGetTaskHistory:
     async def test_history_grows_after_status_change(self, client: AsyncClient, seed):
         task_id = str(seed["task_created"].id)
 
-        await client.patch(f"/tasks/{task_id}/status", json={
-            "new_status": "in_progress",
-            "changed_by": str(seed["alice"].id),
-            "comment": "Берём в работу",
-        })
+        await client.patch(
+            f"/tasks/{task_id}/status",
+            json={
+                "new_status": "in_progress",
+                "changed_by": str(seed["alice"].id),
+                "comment": "Берём в работу",
+            },
+        )
 
         resp = await client.get(f"/tasks/{task_id}/history")
         assert resp.status_code == 200

@@ -1,5 +1,5 @@
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 
 revision = "001"
@@ -8,8 +8,8 @@ branch_labels = None
 depends_on = None
 
 _priority_enum = sa.Enum("low", "medium", "high", "critical", name="task_priority")
-_status_enum   = sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status")
-_role_enum     = sa.Enum("owner", "member", "viewer", name="member_role")
+_status_enum = sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status")
+_role_enum = sa.Enum("owner", "member", "viewer", name="member_role")
 
 
 def upgrade() -> None:
@@ -65,8 +65,16 @@ def upgrade() -> None:
         sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("task_id", UUID(as_uuid=True), sa.ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False),
         sa.Column("changed_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False),
-        sa.Column("from_status", sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status", create_type=False), nullable=False),
-        sa.Column("to_status",   sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status", create_type=False), nullable=False),
+        sa.Column(
+            "from_status",
+            sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status", create_type=False),
+            nullable=False,
+        ),
+        sa.Column(
+            "to_status",
+            sa.Enum("created", "in_progress", "review", "done", "cancelled", name="task_status", create_type=False),
+            nullable=False,
+        ),
         sa.Column("changed_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("comment", sa.Text, nullable=True),
         sa.CheckConstraint("from_status <> to_status", name="chk_status_different"),

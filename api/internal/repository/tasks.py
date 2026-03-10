@@ -5,7 +5,13 @@ import uuid
 from sqlalchemy import String, case, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..orm_models.dao import PRIORITY_ORDER, Task, TaskPriority, TaskStatus, TaskStatusHistory
+from ..orm_models.dao import (
+    PRIORITY_ORDER,
+    Task,
+    TaskPriority,
+    TaskStatus,
+    TaskStatusHistory,
+)
 
 
 class TaskRepository:

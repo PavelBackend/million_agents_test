@@ -4,7 +4,16 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -58,11 +67,17 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    owned_projects: Mapped[list[Project]] = relationship("Project", back_populates="owner", foreign_keys="Project.owner_id")
+    owned_projects: Mapped[list[Project]] = relationship(
+        "Project", back_populates="owner", foreign_keys="Project.owner_id"
+    )
     memberships: Mapped[list[ProjectMember]] = relationship("ProjectMember", back_populates="user")
     authored_tasks: Mapped[list[Task]] = relationship("Task", back_populates="author", foreign_keys="Task.author_id")
-    assigned_tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee", foreign_keys="Task.assignee_id")
-    status_changes: Mapped[list[TaskStatusHistory]] = relationship("TaskStatusHistory", back_populates="changed_by_user")
+    assigned_tasks: Mapped[list[Task]] = relationship(
+        "Task", back_populates="assignee", foreign_keys="Task.assignee_id"
+    )
+    status_changes: Mapped[list[TaskStatusHistory]] = relationship(
+        "TaskStatusHistory", back_populates="changed_by_user"
+    )
 
 
 class Project(Base):
@@ -75,7 +90,9 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     owner: Mapped[User] = relationship("User", back_populates="owned_projects", foreign_keys=[owner_id])
-    members: Mapped[list[ProjectMember]] = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
+    members: Mapped[list[ProjectMember]] = relationship(
+        "ProjectMember", back_populates="project", cascade="all, delete-orphan"
+    )
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="project", cascade="all, delete-orphan")
 
     __table_args__ = (Index("idx_projects_owner", "owner_id"),)
@@ -86,7 +103,9 @@ class ProjectMember(Base):
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    role: Mapped[MemberRole] = mapped_column(Enum(MemberRole, name="member_role"), nullable=False, default=MemberRole.member)
+    role: Mapped[MemberRole] = mapped_column(
+        Enum(MemberRole, name="member_role"), nullable=False, default=MemberRole.member
+    )
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     project: Mapped[Project] = relationship("Project", back_populates="members")
@@ -102,8 +121,12 @@ class Task(Base):
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    priority: Mapped[TaskPriority] = mapped_column(Enum(TaskPriority, name="task_priority"), nullable=False, default=TaskPriority.medium)
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus, name="task_status"), nullable=False, default=TaskStatus.created)
+    priority: Mapped[TaskPriority] = mapped_column(
+        Enum(TaskPriority, name="task_priority"), nullable=False, default=TaskPriority.medium
+    )
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus, name="task_status"), nullable=False, default=TaskStatus.created
+    )
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     assignee_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -114,7 +137,9 @@ class Task(Base):
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
     author: Mapped[User] = relationship("User", back_populates="authored_tasks", foreign_keys=[author_id])
     assignee: Mapped[User | None] = relationship("User", back_populates="assigned_tasks", foreign_keys=[assignee_id])
-    history: Mapped[list[TaskStatusHistory]] = relationship("TaskStatusHistory", back_populates="task", cascade="all, delete-orphan")
+    history: Mapped[list[TaskStatusHistory]] = relationship(
+        "TaskStatusHistory", back_populates="task", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_tasks_project", "project_id"),

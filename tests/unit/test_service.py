@@ -45,13 +45,16 @@ async def test_get_task_returns_task_when_found():
     assert result is task
 
 
-@pytest.mark.parametrize("current,target", [
-    (TaskStatus.created,   TaskStatus.review),
-    (TaskStatus.created,   TaskStatus.done),
-    (TaskStatus.review,    TaskStatus.created),
-    (TaskStatus.done,      TaskStatus.in_progress),
-    (TaskStatus.cancelled, TaskStatus.created),
-])
+@pytest.mark.parametrize(
+    "current,target",
+    [
+        (TaskStatus.created, TaskStatus.review),
+        (TaskStatus.created, TaskStatus.done),
+        (TaskStatus.review, TaskStatus.created),
+        (TaskStatus.done, TaskStatus.in_progress),
+        (TaskStatus.cancelled, TaskStatus.created),
+    ],
+)
 async def test_change_status_raises_400_for_invalid_transition(current, target):
     task = _make_task(current)
     repo = MagicMock()
@@ -77,16 +80,19 @@ async def test_change_status_400_message_mentions_terminal(terminal):
     assert "терминальным" in exc.value.detail.lower()
 
 
-@pytest.mark.parametrize("current,target", [
-    (TaskStatus.created,     TaskStatus.in_progress),
-    (TaskStatus.created,     TaskStatus.cancelled),
-    (TaskStatus.in_progress, TaskStatus.review),
-    (TaskStatus.in_progress, TaskStatus.cancelled),
-    (TaskStatus.in_progress, TaskStatus.created),
-    (TaskStatus.review,      TaskStatus.done),
-    (TaskStatus.review,      TaskStatus.in_progress),
-    (TaskStatus.review,      TaskStatus.cancelled),
-])
+@pytest.mark.parametrize(
+    "current,target",
+    [
+        (TaskStatus.created, TaskStatus.in_progress),
+        (TaskStatus.created, TaskStatus.cancelled),
+        (TaskStatus.in_progress, TaskStatus.review),
+        (TaskStatus.in_progress, TaskStatus.cancelled),
+        (TaskStatus.in_progress, TaskStatus.created),
+        (TaskStatus.review, TaskStatus.done),
+        (TaskStatus.review, TaskStatus.in_progress),
+        (TaskStatus.review, TaskStatus.cancelled),
+    ],
+)
 async def test_change_status_delegates_to_repo_for_valid_transition(current, target):
     task = _make_task(current)
     repo = MagicMock()

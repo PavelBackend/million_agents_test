@@ -18,9 +18,7 @@ TEST_DATABASE_URL = (
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 
-_TRUNCATE_SQL = text(
-    "TRUNCATE task_status_history, tasks, project_members, projects, users RESTART IDENTITY CASCADE"
-)
+_TRUNCATE_SQL = text("TRUNCATE task_status_history, tasks, project_members, projects, users RESTART IDENTITY CASCADE")
 
 
 @pytest_asyncio.fixture(scope="session")
