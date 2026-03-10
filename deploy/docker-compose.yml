@@ -1,0 +1,49 @@
+services:
+  main_service:
+    container_name: million_agents_service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: >
+      sh -c "alembic -c api/alembic.ini upgrade head &&
+             python -m api.seed &&
+             uvicorn api.internal.main:app --host 0.0.0.0 --port 8000 --reload"
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      TZ: "Europe/Moscow"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../:/app
+    networks:
+      - million_agents_backend
+    depends_on:
+      pg_db:
+        condition: service_healthy
+
+  pg_db:
+    container_name: million_agents_database
+    image: postgres:16
+    env_file:
+      - ../.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - million_agents_data:/var/lib/postgresql/data
+    networks:
+      - million_agents_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+volumes:
+  million_agents_data:
+
+networks:
+  million_agents_backend:
+    driver: bridge

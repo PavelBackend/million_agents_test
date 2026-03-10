@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+    branches: ["master", "main"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dev dependencies
+        run: poetry install --only dev --no-root
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --all-files
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Build and start services
+        run: docker compose -f deploy/docker-compose.yml up --build -d
+
+      - name: Run tests
+        run: docker compose -f deploy/docker-compose.yml exec -T main_service pytest
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f deploy/docker-compose.yml down -v
