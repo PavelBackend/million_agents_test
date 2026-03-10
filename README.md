@@ -12,6 +12,20 @@ REST API для управления задачами с поддержкой п
 
 ### Запуск приложения
 
+## Клонируем
+
+```bash
+git clone https://github.com/PavelBackend/million_agents_test.git
+```
+
+## Переходим в директорию и создаем .env
+
+```bash
+cd million_agents_test && cp .env.example .env
+```
+
+## Запускаем проект
+
 ```bash
 docker compose -f deploy/docker-compose.yml --env-file .env up --build -d
 ```
@@ -28,6 +42,12 @@ Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ```bash
 docker compose -f deploy/docker-compose.yml down
+```
+
+## Остановка и удаление томов
+
+```bash
+docker compose -f deploy/docker-compose.yml down -v
 ```
 
 ### Логи
@@ -71,7 +91,7 @@ proj_2  → 00000000-0000-0000-0001-000000000002  (Mobile App)
 
 Для запуска тестов выполните:
 ```bash
-docker exec -it -f million_agents_service -c "poetry run pytest"
+docker exec -it million_agents_service poetry run pytest
 ```
 
 Тесты используют отдельную базу `million_agents_test` (создаётся автоматически).  
